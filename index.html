@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>قارئ الحبر - صفحة التعليقات</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-main: #0c0f17;
+      --bg-card: #151a26;
+      --bg-card-sub: #1c2233;
+      --accent-blue: #2563eb;
+      --accent-teal: #10b981;
+      --accent-red: #ef4444;
+      --accent-orange: #f97316;
+      --text-main: #f3f4f6;
+      --text-sub: #9ca3af;
+      --border: #232d42;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: system-ui, -apple-system, sans-serif; }
+    body { margin: 0; padding: 0; background-color: var(--bg-main); color: var(--text-main); padding-bottom: 70px; }
+
+    /* Top Navigation */
+    .top-bar {
+      padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+      background: rgba(12, 15, 23, 0.95); position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+    }
+    .icon-btn { background: transparent; border: none; color: #fff; font-size: 1.1rem; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; }
+
+    /* Views Switcher */
+    .page-view { display: none; padding: 16px; }
+    .page-view.active { display: block; }
+
+    /* --- Manga Details Styles --- */
+    .manga-header-grid { display: grid; grid-template-columns: 1fr 120px; gap: 14px; align-items: start; margin-bottom: 16px; }
+    .manga-title-main { font-size: 1.5rem; font-weight: bold; margin: 0 0 8px 0; color: #fff; }
+    .manga-meta-item { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 4px; }
+    .manga-cover-img { width: 120px; height: 170px; border-radius: 12px; object-fit: cover; border: 1px solid var(--border); }
+    .tags-row { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 14px; scrollbar-width: none; }
+    .tag-btn { background: #ffffff10; border: 1px solid var(--border); color: #e5e7eb; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; white-space: nowrap; }
+    .desc-box { font-size: 0.82rem; color: #d1d5db; line-height: 1.6; background: rgba(21, 26, 38, 0.6); padding: 12px; border-radius: 12px; margin-bottom: 14px; border: 1px solid var(--border); }
+
+    .tab-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+    .tab-btn { padding: 12px; border-radius: 10px; border: none; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; }
+    .tab-btn.active-teal { background: #14b8a6; color: #fff; }
+    .tab-btn.inactive { background: #ffffff0f; color: #fff; border: 1px solid var(--border); }
+
+    .warning-box { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--accent-red); color: #fca5a5; padding: 12px; border-radius: 10px; font-size: 0.8rem; font-weight: bold; display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+
+    .action-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .action-btn-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 4px; text-align: center; color: var(--text-sub); font-size: 0.75rem; cursor: pointer; }
+    .action-btn-card i { display: block; font-size: 1.1rem; margin-bottom: 4px; color: #fff; }
+
+    .stats-blue-box { background: var(--accent-blue); border-radius: 12px; padding: 14px; display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; color: #fff; margin-bottom: 20px; }
+    .stat-val { font-size: 1.1rem; font-weight: bold; margin-bottom: 2px; }
+    .stat-lbl { font-size: 0.7rem; opacity: 0.85; }
+
+    .more-comments-btn {
+      width: 100%; padding: 12px; background: transparent; border: 1px solid var(--accent-blue);
+      color: var(--accent-blue); font-weight: bold; border-radius: 10px; font-size: 0.85rem;
+      display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; margin-top: 10px;
+    }
+
+    /* --- Full Comments Page Styles (Screenshot 3) --- */
+    .comments-header-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 16px; color: #fff; }
+
+    .full-comment-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px; margin-bottom: 14px; position: relative;
+    }
+    .full-comment-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .full-comment-user { display: flex; align-items: center; gap: 10px; }
+    .full-avatar { width: 38px; height: 38px; border-radius: 8px; object-fit: cover; }
+    .full-username { font-size: 0.85rem; font-weight: bold; color: #fff; }
+    .full-date { font-size: 0.7rem; color: var(--text-sub); margin-top: 2px; }
+    .full-comment-body { font-size: 0.85rem; color: #d1d5db; line-height: 1.5; margin-bottom: 12px; word-break: break-word; }
+    .spoiler-text { color: var(--accent-red); font-weight: bold; font-size: 0.82rem; }
+
+    .comment-actions-bar {
+      display: flex; align-items: center; gap: 16px; font-size: 0.78rem; color: var(--text-sub);
+      border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;
+    }
+    .action-item { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .action-item:hover { color: #fff; }
+
+    /* Bottom Comment Box Input */
+    .comment-input-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; background: #111522;
+      border-top: 1px solid var(--border); padding: 10px 14px;
+      display: flex; align-items: center; gap: 10px; z-index: 1000;
+    }
+    .comment-input-field {
+      flex: 1; background: var(--bg-main); border: 1px solid var(--border);
+      color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; outline: none;
+    }
+    .spoiler-checkbox { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--text-sub); cursor: pointer; }
+    .send-btn { background: transparent; border: none; color: var(--accent-blue); font-size: 1.2rem; cursor: pointer; padding: 4px; }
+
+    /* Bottom Nav */
+    .bottom-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      background: #090c12; border-top: 1px solid var(--border);
+      display: flex; justify-content: space-around; align-items: center; z-index: 900;
+    }
+    .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; color: var(--text-sub); font-size: 0.72rem; cursor: pointer; width: 33%; }
+    .nav-btn.active { color: var(--accent-blue); }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <button class="icon-btn" id="backBtn" onclick="goBack()"><i class="fa-solid fa-arrow-right"></i></button>
+    <div id="topBarTitle" style="font-weight: bold; font-size: 1rem; color: var(--text-main);">Shamo</div>
+    <button class="icon-btn"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+  </div>
+
+  <!-- PAGE 1: MANGA DETAILS -->
+  <div id="page-details" class="page-view active">
+    
+    <div class="manga-header-grid">
+      <div>
+        <h1 class="manga-title-main">Shamo</h1>
+        <div class="manga-meta-item">آخر تحديث الفصل : <span style="color:#fff; font-weight:bold;">184</span></div>
+        <div class="manga-meta-item">منذ 4 ساعات تقريباً</div>
+        <div class="manga-meta-item">حالة القصة : <span style="color:#fff;">مستمرة (1998)</span></div>
+        <div class="manga-meta-item">مانجا يابانية 17+ | 🇯🇵</div>
+      </div>
+      <img class="manga-cover-img" src="https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400">
+    </div>
+
+    <div class="tags-row">
+      <span class="tag-btn">أكشن</span>
+      <span class="tag-btn">تاريخي</span>
+      <span class="tag-btn">دراما</span>
+      <span class="tag-btn">راشد</span>
+      <span class="tag-btn">سينين</span>
+      <span class="tag-btn">فنون قتال</span>
+    </div>
+
+    <div class="desc-box">
+      في سن يناهز السادسة عشرة، ريو ناروشيما، فتى ذكي لم يواجه أي مشكلة في دخول جامعة طوكيو للانضمام إلى نخبة المجتمع...
+    </div>
+
+    <div class="tab-switch">
+      <button class="tab-btn active-teal"><i class="fa-regular fa-file-lines"></i> التفاصيل</button>
+      <button class="tab-btn inactive"><i class="fa-solid fa-list"></i> الفصول</button>
+    </div>
+
+    <div class="warning-box">
+      <span>ربما يحتوي هذا العمل على مشاهد غير مناسبة للقصر، مشاهد العنف، الدماء، أو الرومانسية...</span>
+      <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.3rem;"></i>
+    </div>
+
+    <div class="action-grid">
+      <div class="action-btn-card" onclick="showPage('comments')"><i class="fa-regular fa-comments"></i>التعليقات</div>
+      <div class="action-btn-card"><i class="fa-solid fa-folder-plus"></i>أضف للمكتبة</div>
+      <div class="action-btn-card"><i class="fa-regular fa-star"></i>تقييمك</div>
+    </div>
+
+    <div class="stats-blue-box">
+      <div><div class="stat-val">45 ألف</div><div class="stat-lbl">مشاهدات</div></div>
+      <div><div class="stat-val">184</div><div class="stat-lbl">عدد الفصول</div></div>
+      <div><div class="stat-val">8.77</div><div class="stat-lbl">تقييم القراء</div></div>
+    </div>
+
+    <!-- More Comments Button -->
+    <button class="more-comments-btn" onclick="showPage('comments')">
+      <span>المزيد من التعليقات</span>
+      <i class="fa-solid fa-chevron-left"></i>
+    </button>
+  </div>
+
+  <!-- PAGE 2: FULL COMMENTS PAGE (Screenshot 3) -->
+  <div id="page-comments" class="page-view" style="padding-bottom: 85px;">
+    
+    <div class="comments-header-title">التعليقات (37)</div>
+
+    <div id="fullCommentsContainer">
+      <!-- Comment 1 -->
+      <div class="full-comment-card">
+        <div class="full-comment-top">
+          <div class="full-comment-user">
+            <img class="full-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=Mafia">
+            <div>
+              <div class="full-username">مافيا Mafia</div>
+              <div class="full-date">منذ 8 أيام</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-ellipsis-vertical" style="color:var(--text-sub); font-size:0.8rem;"></i>
+        </div>
+        <div class="full-comment-body">الغلاف حسبته جد أوروما شون</div>
+        <div class="comment-actions-bar">
+          <div class="action-item"><i class="fa-regular fa-thumbs-up"></i> 0</div>
+          <div class="action-item"><i class="fa-regular fa-thumbs-down"></i> 0</div>
+          <div class="action-item"><i class="fa-regular fa-comment"></i> الرد 0</div>
+        </div>
+      </div>
+
+      <!-- Comment 2 -->
+      <div class="full-comment-card">
+        <div class="full-comment-top">
+          <div class="full-comment-user">
+            <div class="full-avatar" style="background:#10b981; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold;">F</div>
+            <div>
+              <div class="full-username">تونة عنيدة 🐳🐳</div>
+              <div class="full-date">منذ 13 يوم</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-ellipsis-vertical" style="color:var(--text-sub); font-size:0.8rem;"></i>
+        </div>
+        <div class="full-comment-body">الكاتب ما عرف يعمل قصة عميقة فقال ليش ما ادخل gay وجنس وكل قذارة وخلاص 🤮👎👎</div>
+        <div class="comment-actions-bar">
+          <div class="action-item"><i class="fa-regular fa-thumbs-up"></i> 0</div>
+          <div class="action-item"><i class="fa-regular fa-thumbs-down"></i> 0</div>
+          <div class="action-item"><i class="fa-regular fa-comment"></i> الرد 0</div>
+        </div>
+      </div>
+
+      <!-- Comment 3 -->
+      <div class="full-comment-card">
+        <div class="full-comment-top">
+          <div class="full-comment-user">
+            <img class="full-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=Nema">
+            <div>
+              <div class="full-username">نعمة</div>
+              <div class="full-date">منذ 20 يوم</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-ellipsis-vertical" style="color:var(--text-sub); font-size:0.8rem;"></i>
+        </div>
+        <div class="full-comment-body">الغلاف يخرع</div>
+        <div class="comment-actions-bar">
+          <div class="action-item"><i class="fa-regular fa-thumbs-up"></i> 0</div>
+          <div class="action-item"><i class="fa-regular fa-thumbs-down"></i> 0</div>
+          <div class="action-item"><i class="fa-regular fa-comment"></i> الرد 0</div>
+        </div>
+      </div>
+
+      <!-- Comment 4 (Spoiler Alert Example) -->
+      <div class="full-comment-card">
+        <div class="full-comment-top">
+          <div class="full-comment-user">
+            <img class="full-avatar" src="https://api.dicebear.com/7.x/adventurer/svg?seed=Renbo">
+            <div>
+              <div class="full-username">رنبو 🌺</div>
+              <div class="full-date">منذ شهر واحد تقريباً</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-ellipsis-vertical" style="color:var(--text-sub); font-size:0.8rem;"></i>
+        </div>
+        <div class="full-comment-body spoiler-text">تحذير: هذا النص يحتوي على حرق</div>
+        <div class="comment-actions-bar">
+          <div class="action-item"><i class="fa-regular fa-thumbs-up"></i> 0</div>
+          <div class="action-item"><i class="fa-regular fa-thumbs-down"></i> 0</div>
+          <div class="action-item"><i class="fa-regular fa-comment"></i> الرد 0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Fixed Input Bar (Full Comment Box) -->
+    <div class="comment-input-bar">
+      <button class="send-btn" onclick="addNewComment()"><i class="fa-solid fa-paper-plane"></i></button>
+      <label class="spoiler-checkbox">
+        <input type="checkbox" id="spoilerCheck"> حرق
+      </label>
+      <input type="text" id="newCommentText" class="comment-input-field" placeholder="كتابة تعليق...">
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation Bar -->
+  <div class="bottom-bar">
+    <div class="nav-btn active" onclick="showPage('details')"><i class="fa-solid fa-house"></i><span>الرئيسية</span></div>
+    <div class="nav-btn" onclick="showPage('details')"><i class="fa-solid fa-compass"></i><span>تصفح</span></div>
+    <div class="nav-btn" onclick="showPage('details')"><i class="fa-solid fa-bookmark"></i><span>مكتبتي</span></div>
+  </div>
+
+  <script>
+    let activePage = 'details';
+
+    function showPage(pageId) {
+      activePage = pageId;
+      document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + pageId).classList.add('active');
+
+      // Update Header Title based on Page
+      if(pageId === 'comments') {
+        document.getElementById('topBarTitle').innerText = 'التعليقات';
+      } else {
+        document.getElementById('topBarTitle').innerText = 'Shamo';
+      }
+      window.scrollTo(0,0);
+    }
+
+    function goBack() {
+      if(activePage === 'comments') {
+        showPage('details');
+      } else {
+        alert('العودة للصفحة الرئيسية');
+      }
+    }
+
+    function addNewComment() {
+      const txtInput = document.getElementById('newCommentText');
+      const isSpoiler = document.getElementById('spoilerCheck').checked;
+      const val = txtInput.value.trim();
+
+      if(!val) return;
+
+      const container = document.getElementById('fullCommentsContainer');
+      const newCard = document.createElement('div');
+      newCard.className = 'full-comment-card';
+
+      newCard.innerHTML = `
+        <div class="full-comment-top">
+          <div class="full-comment-user">
+            <img class="full-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=${Date.now()}">
+            <div>
+              <div class="full-username">أنت (زائر)</div>
+              <div class="full-date">الآن</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-ellipsis-vertical" style="color:var(--text-sub); font-size:0.8rem;"></i>
+        </div>
+        <div class="full-comment-body ${isSpoiler ? 'spoiler-text' : ''}">
+          ${isSpoiler ? 'تحذير: هذا النص يحتوي على حرق' : val}
+        </div>
+        <div class="comment-actions-bar">
+          <div class="action-item"><i class="fa-regular fa-thumbs-up"></i> 0</div>
+          <div class="action-item"><i class="fa-regular fa-thumbs-down"></i> 0</div>
+          <div class="action-item"><i class="fa-regular fa-comment"></i> الرد 0</div>
+        </div>
+      `;
+
+      container.prepend(newCard);
+      txtInput.value = '';
+      document.getElementById('spoilerCheck').checked = false;
+    }
+  </script>
+</body>
+  </html>
+    
