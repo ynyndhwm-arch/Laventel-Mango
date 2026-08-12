@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>قارئ الحبر - Manga App</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-main: #0a0b12;
+      --bg-card: #141721;
+      --accent-teal: #10b981;
+      --accent-blue: #2563eb;
+      --accent-red: #ef4444;
+      --text-main: #f3f4f6;
+      --text-sub: #9ca3af;
+      --border: #232d42;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: system-ui, -apple-system, sans-serif; }
+    body { margin: 0; padding: 0; background-color: var(--bg-main); color: var(--text-main); padding-bottom: 70px; }
+
+    /* Top Bar */
+    .top-bar {
+      padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
+      background: rgba(10, 11, 18, 0.95); position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+    }
+    .icon-btn { background: var(--bg-card); border: 1px solid var(--border); color: #fff; font-size: 1rem; cursor: pointer; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+    /* Page Views */
+    .page-view { display: none; padding: 16px; }
+    .page-view.active { display: block; }
+
+    /* Home UI */
+    .app-title-head { font-size: 1.4rem; font-weight: bold; margin-bottom: 16px; }
+    .trending-scroll { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .trending-card { cursor: pointer; }
+    .trending-cover { width: 100%; height: 150px; border-radius: 12px; object-fit: cover; border: 1px solid var(--border); }
+
+    /* Details UI */
+    .manga-header-layout { display: grid; grid-template-columns: 1fr 120px; gap: 16px; align-items: start; margin-bottom: 20px; }
+    .manga-title-main { font-size: 1.5rem; font-weight: bold; margin: 0 0 8px 0; }
+    .manga-meta-item { font-size: 0.8rem; color: var(--text-sub); margin-bottom: 5px; }
+    .manga-cover-img { width: 120px; height: 180px; border-radius: 14px; object-fit: cover; }
+    .desc-box { font-size: 0.85rem; color: var(--text-main); line-height: 1.6; background: rgba(20, 23, 33, 0.6); padding: 12px; border-radius: 12px; margin-bottom: 16px; border: 1px solid var(--border); }
+    .stats-blue-box { background: var(--accent-blue); border-radius: 14px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; color: #fff; margin-bottom: 20px; }
+    
+    /* Navigation */
+    .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: #090c12; border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
+    .nav-btn { display: flex; flex-direction: column; align-items: center; color: var(--text-sub); font-size: 0.75rem; cursor: pointer; }
+    .nav-btn.active { color: var(--accent-blue); }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <button class="icon-btn" onclick="showPage('home')"><i class="fa-solid fa-arrow-right"></i></button>
+    <div style="font-weight: bold;">مكتبة المانجا</div>
+    <button class="icon-btn" onclick="alert('إضافة')"><i class="fa-solid fa-plus"></i></button>
+  </div>
+
+  <!-- HOME PAGE -->
+  <div id="page-home" class="page-view active">
+    <div class="app-title-head">المانجات المتاحة</div>
+    <div class="trending-scroll" id="home-list"></div>
+  </div>
+
+  <!-- DETAILS PAGE -->
+  <div id="page-details" class="page-view">
+    <div class="manga-header-layout">
+      <div class="manga-header-info">
+        <h1 class="manga-title-main" id="detailTitle">...</h1>
+        <div class="manga-meta-item">الفصول: <span id="detailChapter">...</span></div>
+        <div class="manga-meta-item">الحالة: مستمرة</div>
+      </div>
+      <img id="detailCover" class="manga-cover-img" src="">
+    </div>
+    <div class="desc-box" id="detailDesc">...</div>
+    <div class="stats-blue-box">
+      <div><div class="stat-val">45 ألف</div><div class="stat-lbl">مشاهدة</div></div>
+      <div><div class="stat-val" id="statChapters">0</div><div class="stat-lbl">فصل</div></div>
+      <div><div class="stat-val">8.7</div><div class="stat-lbl">تقييم</div></div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-bar">
+    <div class="nav-btn active" onclick="showPage('home')"><i class="fa-solid fa-house"></i><span>الرئيسية</span></div>
+    <div class="nav-btn" onclick="showPage('home')"><i class="fa-solid fa-compass"></i><span>تصفح</span></div>
+    <div class="nav-btn" onclick="showPage('home')"><i class="fa-solid fa-bookmark"></i><span>مكتبتي</span></div>
+  </div>
+
+  <script>
+    const mangaData = [
+      { id: 1, title: "Shamo", cover: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400", desc: "قصة ريو ناروشيما الذي فقد عقله في الصيف.", chapters: "184" },
+      { id: 2, title: "سيف الفجر", cover: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400", desc: "صراع في عالم مظلم.", chapters: "142" }
+    ];
+
+    function showPage(pageId) {
+      document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + pageId).classList.add('active');
+    }
+
+    function openMangaDetails(id) {
+      const item = mangaData.find(m => m.id === id);
+      document.getElementById('detailTitle').innerText = item.title;
+      document.getElementById('detailCover').src = item.cover;
+      document.getElementById('detailDesc').innerText = item.desc;
+      document.getElementById('detailChapter').innerText = item.chapters;
+      document.getElementById('statChapters').innerText = item.chapters;
+      showPage('details');
+    }
+
+    // Init Render
+    const homeList = document.getElementById('home-list');
+    homeList.innerHTML = mangaData.map(m => `
+      <div class="trending-card" onclick="openMangaDetails(${m.id})">
+        <img src="${m.cover}" class="trending-cover">
+        <div style="font-size:0.8rem; margin-top:4px;">${m.title}</div>
+      </div>
+    `).join('');
+
+    // **هذا السطر هو المسؤول عن بداية التشغيل**
+    showPage('home'); 
+  </script>
+</body>
+  </html>
+      
