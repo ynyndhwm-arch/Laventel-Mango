@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>قارئ الحبر - لوحة التحكم والتعديل</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-main: #0d0d11;
+      --bg-card: #18171f;
+      --accent-orange: #f97316;
+      --accent-blue: #3b82f6;
+      --text-main: #f3f3f3;
+      --text-sub: #9e93b0;
+      --border: #262433;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: system-ui, -apple-system, sans-serif; }
+    body { margin: 0; padding: 0; background-color: var(--bg-main); color: var(--text-main); padding-bottom: 75px; }
+
+    /* Top Bar */
+    .top-bar {
+      padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
+      background: rgba(13, 13, 17, 0.95); position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(10px); border-bottom: 1px solid var(--border);
+    }
+    .icon-btn { background: var(--bg-card); border: 1px solid var(--border); color: #fff; font-size: 1rem; cursor: pointer; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+    /* Views Switcher */
+    .page-view { display: none; padding: 16px; }
+    .page-view.active { display: block; }
+
+    .welcome-text { font-size: 0.8rem; color: var(--text-sub); }
+    .app-title-head { font-size: 1.4rem; font-weight: bold; margin-bottom: 16px; }
+
+    /* Hero Banner */
+    .hero-card {
+      position: relative; border-radius: 16px; overflow: hidden; height: 160px; padding: 16px;
+      display: flex; flex-direction: column; justify-content: flex-end;
+      background-size: cover; background-position: center;
+      border: 1px solid var(--border); margin-bottom: 16px; cursor: pointer;
+    }
+    .badge-orange { background: var(--accent-orange); color: #fff; font-size: 0.7rem; font-weight: bold; padding: 3px 8px; border-radius: 6px; width: fit-content; margin-bottom: 6px; }
+
+    /* Tags Scroll */
+    .tags-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 20px; scrollbar-width: none; }
+    .tag-chip { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-sub); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; white-space: nowrap; cursor: pointer; }
+
+    /* Trending Grid/Scroll */
+    .trending-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 20px; scrollbar-width: none; }
+    .trending-card { min-width: 110px; width: 110px; cursor: pointer; }
+    .trending-cover { width: 110px; height: 150px; border-radius: 12px; object-fit: cover; position: relative; border: 1px solid var(--border); }
+    .badge-new { position: absolute; top: 6px; right: 6px; background: var(--accent-orange); color: #fff; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+
+    /* Updates Rows */
+    .update-row {
+      background: var(--bg-card); border-radius: 14px; padding: 10px; margin-bottom: 10px;
+      display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border); cursor: pointer;
+    }
+    .update-img { width: 50px; height: 50px; border-radius: 10px; object-fit: cover; }
+
+    /* Details Page */
+    .manga-details-header { text-align: center; margin-bottom: 20px; }
+    .manga-details-cover { width: 140px; height: 200px; border-radius: 14px; object-fit: cover; border: 1px solid var(--border); }
+
+    /* Bottom Nav Bar */
+    .bottom-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 62px;
+      background: #111016; border-top: 1px solid var(--border);
+      display: flex; justify-content: space-around; align-items: center; z-index: 1000;
+    }
+    .nav-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-sub); font-size: 0.75rem; cursor: pointer; width: 33%; }
+    .nav-btn.active { color: var(--accent-orange); }
+
+    /* Edit/Add Modal Overlay */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; overflow-y: auto; }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; max-width: 400px; width: 100%; text-align: right; max-height: 90vh; overflow-y: auto; }
+    .input-field { width: 100%; background: #0d0d11; border: 1px solid var(--border); color: #fff; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; margin-top: 4px; font-size: 0.9rem; }
+    textarea.input-field { resize: vertical; height: 70px; }
+    .btn-action { width: 100%; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <button class="icon-btn" onclick="openAddModal()" title="إضافة مانجا جديدة"><i class="fa-solid fa-plus"></i></button>
+    <div style="font-weight: bold; font-size: 1.1rem; color: var(--text-main);">قارئ الحبر 🥭</div>
+    <button class="icon-btn" onclick="resetData()" title="إعادة تعيين البيانات"><i class="fa-solid fa-rotate-left"></i></button>
+  </div>
+
+  <!-- PAGE 1: HOME -->
+  <div id="page-home" class="page-view active">
+    <div class="welcome-text">مرحباً بعودتك</div>
+    <div class="app-title-head">قارئ الحبر</div>
+
+    <!-- Featured Banner -->
+    <div id="heroCard" class="hero-card" onclick="openMangaDetails(mangaData[0].id)">
+      <span class="badge-orange">الأكثر رواقاً</span>
+      <div id="heroTitle" style="font-size:1.3rem; font-weight:bold;"></div>
+      <div id="heroMeta" style="font-size:0.8rem; color:var(--text-sub);"></div>
+    </div>
+
+    <!-- Tags Scroll -->
+    <div class="tags-scroll">
+      <div class="tag-chip">أكشن</div>
+      <div class="tag-chip">خيال</div>
+      <div class="tag-chip">رومانسي</div>
+      <div class="tag-chip">رعب</div>
+      <div class="tag-chip">مغامرة</div>
+      <div class="tag-chip">دراما</div>
+    </div>
+
+    <!-- Trending -->
+    <h4 style="margin:0 0 12px 0;"><i class="fa-solid fa-fire" style="color:var(--accent-orange);"></i> الأكثر قراءة الآن</h4>
+    <div class="trending-scroll" id="trending-list"></div>
+
+    <!-- Updates -->
+    <h4 style="margin:16px 0 12px 0;"><i class="fa-regular fa-clock" style="color:var(--accent-orange);"></i> جميع المانجات المتاحة</h4>
+    <div id="updates-list"></div>
+  </div>
+
+  <!-- PAGE 2: MANGA DETAILS -->
+  <div id="page-details" class="page-view">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <button onclick="showPage('home')" style="background:none; border:none; color:var(--accent-orange); font-size:0.9rem; cursor:pointer;">
+        <i class="fa-solid fa-arrow-right"></i> العودة للرئيسية
+      </button>
+      <button onclick="openEditModal(currentSelectedId)" style="background:var(--bg-card); border:1px solid var(--border); color:#fff; padding:6px 12px; border-radius:8px; font-size:0.8rem; cursor:pointer;">
+        <i class="fa-solid fa-pen"></i> تعديل هذه المانجا
+      </button>
+    </div>
+    
+    <div class="manga-details-header">
+      <img id="detailCover" class="manga-details-cover">
+      <h2 id="detailTitle" style="margin:12px 0 4px 0;"></h2>
+      <div id="detailMeta" style="font-size:0.85rem; color:var(--text-sub); margin-bottom:12px;"></div>
+      <p id="detailDesc" style="font-size:0.85rem; color:var(--text-sub); line-height:1.5; text-align:right; background:var(--bg-card); padding:12px; border-radius:12px; border:1px solid var(--border);"></p>
+    </div>
+
+    <h4 style="margin-bottom:12px;">الفصول المتاحة</h4>
+    <div id="chaptersList"></div>
+  </div>
+
+  <!-- PAGE 3: READER -->
+  <div id="page-reader" class="page-view" style="padding:0;">
+    <div style="padding:12px; background:#111016; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border);">
+      <button onclick="showPage('details')" style="background:none; border:none; color:#fff; cursor:pointer;"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+      <span id="readerTitle" style="font-size:0.85rem;"></span>
+    </div>
+    <div id="readerImages" style="text-align:center; padding:10px;"></div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-bar">
+    <div class="nav-btn active" id="nav-home" onclick="showPage('home')"><i class="fa-solid fa-house"></i><span>الرئيسية</span></div>
+    <div class="nav-btn" onclick="showPage('home')"><i class="fa-solid fa-magnifying-glass"></i><span>تصفح</span></div>
+    <div class="nav-btn" onclick="showPage('home')"><i class="fa-regular fa-bookmark"></i><span>مكتبتي</span></div>
+  </div>
+
+  <!-- Edit / Add Modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+      <h3 id="modalHeading" style="margin-top:0;">تعديل المانجا</h3>
+      
+      <label style="font-size:0.8rem; color:var(--text-sub);">عنوان المانجا:</label>
+      <input type="text" id="inputTitle" class="input-field">
+      
+      <label style="font-size:0.8rem; color:var(--text-sub);">التصنيف وعدد الفصول:</label>
+      <input type="text" id="inputGenre" class="input-field" placeholder="مثال: أكشن • 142 فصل">
+      
+      <label style="font-size:0.8rem; color:var(--text-sub);">رابط صورة الغلاف (URL):</label>
+      <input type="text" id="inputCover" class="input-field">
+
+      <label style="font-size:0.8rem; color:var(--text-sub);">الوصف:</label>
+      <textarea id="inputDesc" class="input-field"></textarea>
+
+      <button onclick="saveMangaChanges()" class="btn-action" style="background:var(--accent-orange); color:#fff;">حفظ التغييرات</button>
+      <button onclick="closeEditModal()" class="btn-action" style="background:transparent; color:var(--text-sub);">إلغاء</button>
+    </div>
+  </div>
+
+  <script>
+    // البيانات المبدئية
+    const defaultData = [
+      {
+        id: 1,
+        title: "سيف الفجر",
+        genre: "أكشن • 142 فصل",
+        cover: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400",
+        description: "يدور الصراع في عالم مظلم حيث ينهض الفرسان لحماية أخر معاقل البشرية من الوحوش.",
+        chapters: [
+          { number: 142, title: "الفصل 142: المواجهة الأخيرة" },
+          { number: 141, title: "الفصل 141: الاستعداد للغارة" }
+        ]
+      },
+      {
+        id: 2,
+        title: "طريق الألف خطوة",
+        genre: "مغامرة • 210 فصل",
+        cover: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400",
+        description: "رحلة شيقة للبطل نحو قمة العالم للبحث عن الكنز المفقود.",
+        chapters: [{ number: 210, title: "الفصل 210: البداية الجديدة" }]
+      },
+      {
+        id: 3,
+        title: "العاصفة الحمراء",
+        genre: "أكشن • 175 فصل",
+        cover: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400",
+        description: "قصة المحارب الذي خاض حروب الصحراء بمفرده.",
+        chapters: [{ number: 175, title: "الفصل 175: عاصفة الرمال" }]
+      }
+    ];
+
+    // جلب البيانات من LocalStorage أو استخدام الافتراضية
+    let mangaData = JSON.parse(localStorage.getItem('manga_data')) || defaultData;
+    let currentSelectedId = null;
+    let editingMangaId = null; // null يعني إضافة مانجا جديدة
+
+    function saveToStorage() {
+      localStorage.setItem('manga_data', JSON.stringify(mangaData));
+    }
+
+    function showPage(pageId) {
+      document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-' + pageId).classList.add('active');
+    }
+
+    function renderApp() {
+      if (mangaData.length === 0) return;
+
+      // Hero Banner
+      const hero = mangaData[0];
+      document.getElementById('heroTitle').innerText = hero.title;
+      document.getElementById('heroMeta').innerText = hero.genre;
+      document.getElementById('heroCard').style.backgroundImage = `linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(13,13,17,0.95) 100%), url('${hero.cover}')`;
+
+      // Trending Render
+      const trendContainer = document.getElementById('trending-list');
+      trendContainer.innerHTML = mangaData.map(m => `
+        <div class="trending-card" onclick="openMangaDetails(${m.id})">
+          <div style="position:relative;">
+            <img src="${m.cover}" class="trending-cover">
+            <span class="badge-new">جديد</span>
+          </div>
+          <div style="font-size:0.8rem; font-weight:bold; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${m.title}</div>
+        </div>
+      `).join('');
+
+      // Updates Render
+      const updatesContainer = document.getElementById('updates-list');
+      updatesContainer.innerHTML = mangaData.map(m => `
+        <div class="update-row" onclick="openMangaDetails(${m.id})">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <img src="${m.cover}" class="update-img">
+            <div>
+              <div style="font-weight:bold; font-size:0.9rem;">${m.title}</div>
+              <div style="font-size:0.75rem; color:var(--text-sub);">${m.genre}</div>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-left" style="color:var(--text-sub); font-size:0.8rem;"></i>
+        </div>
+      `).join('');
+    }
+
+    function openMangaDetails(id) {
+      currentSelectedId = id;
+      const item = mangaData.find(m => m.id === id);
+      if (!item) return;
+
+      document.getElementById('detailCover').src = item.cover;
+      document.getElementById('detailTitle').innerText = item.title;
+      document.getElementById('detailMeta').innerText = item.genre;
+      document.getElementById('detailDesc').innerText = item.description || "لا يوجد وصف متاح.";
+
+      const chapList = document.getElementById('chaptersList');
+      chapList.innerHTML = (item.chapters && item.chapters.length > 0) ? item.chapters.map(ch => `
+        <div class="update-row" onclick="openChapter('${item.title}', '${ch.title}')">
+          <div style="font-weight:bold; font-size:0.85rem;">${ch.title}</div>
+          <i class="fa-solid fa-play" style="color:var(--accent-orange); font-size:0.8rem;"></i>
+        </div>
+      `).join('') : '<div style="color:var(--text-sub); font-size:0.85rem;">لا توجد فصول مضافة بعد.</div>';
+
+      showPage('details');
+    }
+
+    function openChapter(mangaTitle, chapterTitle) {
+      document.getElementById('readerTitle').innerText = `${mangaTitle} - ${chapterTitle}`;
+      document.getElementById('readerImages').innerHTML = `
+        <div style="padding:40px 10px; color:var(--text-sub);">
+          <i class="fa-regular fa-image" style="font-size:3rem; margin-bottom:10px;"></i>
+          <p>[شاشة عرض الفصول للاختبار]</p>
+        </div>
+      `;
+      showPage('reader');
+    }
+
+    /* التحكم بالتعديل والإضافة */
+    function openEditModal(id) {
+      editingMangaId = id;
+      const item = mangaData.find(m => m.id === id);
+      if (!item) return;
+
+      document.getElementById('modalHeading').innerText = "تعديل بيانات المانجا";
+      document.getElementById('inputTitle').value = item.title;
+      document.getElementById('inputGenre').value = item.genre;
+      document.getElementById('inputCover').value = item.cover;
+      document.getElementById('inputDesc').value = item.description || '';
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function openAddModal() {
+      editingMangaId = null; // إضافة عمل جديد
+      document.getElementById('modalHeading').innerText = "إضافة مانجا جديدة";
+      document.getElementById('inputTitle').value = '';
+      document.getElementById('inputGenre').value = 'أكشن • 1 فصل';
+      document.getElementById('inputCover').value = 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400';
+      document.getElementById('inputDesc').value = '';
+      document.getElementById('editModal').classList.add('active');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('active');
+    }
+
+    function saveMangaChanges() {
+      const title = document.getElementById('inputTitle').value.trim();
+      const genre = document.getElementById('inputGenre').value.trim();
+      const cover = document.getElementById('inputCover').value.trim();
+      const description = document.getElementById('inputDesc').value.trim();
+
+      if (!title) {
+        alert("يرجى إدخال عنوان المانجا");
+        return;
+      }
+
+      if (editingMangaId !== null) {
+        // تعديل مانجا موجودة
+        const item = mangaData.find(m => m.id === editingMangaId);
+        if (item) {
+          item.title = title;
+          item.genre = genre;
+          item.cover = cover;
+          item.description = description;
+        }
+      } else {
+        // إضافة مانجا جديدة
+        const newManga = {
+          id: Date.now(),
+          title: title,
+          genre: genre,
+          cover: cover,
+          description: description,
+          chapters: [{ number: 1, title: "الفصل 1: البداية" }]
+        };
+        mangaData.unshift(newManga);
+      }
+
+      saveToStorage();
+      renderApp();
+      closeEditModal();
+
+      if (editingMangaId !== null && document.getElementById('page-details').classList.contains('active')) {
+        openMangaDetails(editingMangaId);
+      }
+    }
+
+    function resetData() {
+      if (confirm("هل تريد إعادة تعيين كافة البيانات إلى وضعها الافتراضي؟")) {
+        localStorage.removeItem('manga_data');
+        mangaData = [...defaultData];
+        renderApp();
+        showPage('home');
+      }
+    }
+
+    // تشغيل التطبيق
+    renderApp();
+  </script>
+</body>
+  </html>
+  
