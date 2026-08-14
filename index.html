@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>قارئ الحبر</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+    :root {
+      --bg-color: #0F0F13;
+      --text-color: #E2E2E2;
+      --card-bg: #1A1A20;
+      --accent: #E94560;
+    }
+    body {
+      background: var(--bg-color); color: var(--text-color);
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      margin: 0; padding: 0; transition: background 0.3s ease;
+    }
+    body.light-mode {
+      --bg-color: #F3F4F6; --text-color: #111827; --card-bg: #FFFFFF;
+    }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 2px; }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body>
+
+  <div id="app" class="min-h-screen w-full flex flex-col pb-16">
+    <header class="flex items-center justify-between p-4 sticky top-0 z-30" style="background: var(--bg-color); border-bottom: 1px solid rgba(128,128,128,0.1)">
+      <button onclick="toggleTheme()" class="p-2 bg-[var(--card-bg)] rounded-lg"><i id="theme-icon" data-lucide="sun" class="w-5 h-5"></i></button>
+      <h1 class="text-xl font-bold tracking-wide">قارئ الحبر</h1>
+      <button onclick="setView('search')" class="p-2 bg-[var(--card-bg)] rounded-lg"><i data-lucide="search" class="w-5 h-5"></i></button>
+    </header>
+
+    <!-- منطقة عرض المحتوى -->
+    <main id="main-content" class="flex-1 overflow-y-auto no-scrollbar"></main>
+    
+    <!-- شريط التنقل السفلي -->
+    <div class="fixed bottom-0 inset-x-0 h-16 flex items-center justify-around z-30" style="background: var(--card-bg); border-top: 1px solid rgba(128,128,128,0.1)">
+      <button onclick="setView('home')" id="nav-home" class="flex flex-col items-center gap-1 text-[11px]"><i data-lucide="home" class="w-5 h-5"></i><span>الرئيسية</span></button>
+      <button onclick="setView('search')" id="nav-search" class="flex flex-col items-center gap-1 text-[11px]"><i data-lucide="compass" class="w-5 h-5"></i><span>تصفح</span></button>
+      <button onclick="setView('library')" id="nav-library" class="flex flex-col items-center gap-1 text-[11px]"><i data-lucide="bookmark" class="w-5 h-5"></i><span>مكتبتي</span></button>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. البيانات الوهمية (قاعدة البيانات المؤقتة) ---
+    const mangas = [
+      { id: 1, title: "ون بيس", genre: "أكشن", ch: 1161, rating: 4.9, cover: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=300&q=80", synopsis: "رحلة البحث عن الكنز الأعظم." },
+      { id: 2, title: "جوجوتسو كايسن", genre: "خيال", ch: 271, rating: 4.8, cover: "https://images.unsplash.com/photo-1613376023733-0a73315d9b06?w=300&q=80", synopsis: "معارك السحرة ضد اللعنات في طوكيو." },
+      { id: 3, title: "قاتل الشياطين", genre: "أكشن", ch: 205, rating: 4.7, cover: "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=300&q=80", synopsis: "فتى يسعى لإنقاذ أخته التي تحولت لشيطان." }
+    ];
+
+    // --- 2. إدارة الحالة (State Management & LocalStorage) ---
+    let currentView = 'home';
+    let activeManga = null;
+    let searchQuery = '';
+    
+    // جلب المفضلة والإعدادات من ذاكرة المتصفح
+    let favorites = new Set(JSON.parse(localStorage.getItem('manga_favs')) || []);
+    let isLightMode = localStorage.getItem('manga_theme') === 'light';
+    
+    if (isLightMode) document.body.classList.add('light-mode');
+
+    // --- 3. الوظائف البرمجية (Functions) ---
+    function saveFavorites() {
+      localStorage.setItem('manga_favs', JSON.stringify([...favorites]));
+    }
+
+    function toggleTheme() {
+      isLightMode = !isLightMode;
+      document.body.classList.toggle('light-mode', isLightMode);
+      localStorage.setItem('manga_theme', isLightMode ? 'light' : 'dark');
+      render();
+    }
+
+    function toggleFavorite(id) {
+      if (favorites.has(id)) favorites.delete(id);
+      else favorites.add(id);
+      saveFavorites();
+      render();
+    }
+
+    function setView(view, id = null) {
+      currentView = view;
+      if (id) activeManga = mangas.find(m => m.id === id);
+      window.scrollTo(0, 0);
+      render();
+    }
+
+    // --- 4. محرك العرض (Render Engine) ---
+    function render() {
+      const main = document.getElementById('main-content');
+      
+      // تحديث ألوان الشريط السفلي
+      ['home', 'search', 'library'].forEach(v => {
+        const btn = document.getElementById(`nav-${v}`);
+        btn.style.color = currentView === v ? 'var(--accent)' : 'gray';
+      });
+      
+      document.getElementById('theme-icon').setAttribute('data-lucide', isLightMode ? 'moon' : 'sun');
+
+      // --- صفحة الرئيسية ---
+      if (currentView === 'home') {
+        main.innerHTML = `
+          <div class="p-4">
+            <h2 class="text-lg font-bold border-r-4 pr-2 mb-4" style="border-color: var(--accent)">الأكثر شهرة</h2>
+            <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+              ${mangas.map(m => `
+                <div class="w-32 shrink-0">
+                  <div onclick="setView('manga', ${m.id})" class="relative w-full h-48 rounded-xl overflow-hidden shadow-lg cursor-pointer">
+                    <img src="${m.cover}" class="w-full h-full object-cover">
+                    <button onclick="event.stopPropagation(); toggleFavorite(${m.id})" class="absolute top-2 left-2 w-8 h-8 rounded-full flex items-center justify-center bg-black/60">
+                      <i data-lucide="heart" class="w-4 h-4" style="color: ${favorites.has(m.id) ? 'var(--accent)' : 'white'}; fill: ${favorites.has(m.id) ? 'var(--accent)' : 'none'}"></i>
+                    </button>
+                  </div>
+                  <p class="text-sm font-bold mt-2 truncate">${m.title}</p>
+                  <p class="text-[11px] opacity-60">الفصل ${m.ch}</p>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      } 
+      // --- صفحة البحث ---
+      else if (currentView === 'search') {
+        const results = mangas.filter(m => m.title.includes(searchQuery));
+        main.innerHTML = `
+          <div class="p-4">
+            <div class="flex items-center gap-2 rounded-xl px-3 py-3 mb-6" style="background: var(--card-bg)">
+              <i data-lucide="search" class="w-5 h-5 opacity-50"></i>
+              <input type="text" value="${searchQuery}" onkeyup="searchQuery = this.value; render()" placeholder="ابحث عن مانجا..." class="bg-transparent outline-none flex-1 text-sm">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              ${results.map(m => `
+                <div onclick="setView('manga', ${m.id})" class="cursor-pointer text-center">
+                  <img src="${m.cover}" class="w-full h-40 object-cover rounded-lg mb-2 shadow-md">
+                  <p class="text-sm font-bold">${m.title}</p>
+                </div>
+              `).join('') || `<p class="col-span-2 text-center opacity-50 text-sm mt-10">لا توجد نتائج</p>`}
+            </div>
+          </div>
+        `;
+      }
+      // --- صفحة المكتبة (تعمل عبر localStorage) ---
+      else if (currentView === 'library') {
+        const favMangas = mangas.filter(m => favorites.has(m.id));
+        main.innerHTML = `
+          <div class="p-4">
+            <h2 class="text-2xl font-bold mb-4">مكتبتي 📚</h2>
+            ${favMangas.length === 0 ? `<p class="text-center opacity-50 mt-20">لم تقم بإضافة أي عمل للمفضلة بعد.</p>` : 
+            `<div class="flex flex-col gap-3">
+              ${favMangas.map(m => `
+                <div onclick="setView('manga', ${m.id})" class="flex gap-4 p-2 rounded-xl cursor-pointer" style="background: var(--card-bg)">
+                  <img src="${m.cover}" class="w-16 h-24 object-cover rounded-lg">
+                  <div class="flex-1 py-1">
+                    <h3 class="font-bold">${m.title}</h3>
+                    <p class="text-xs opacity-60 mt-1">توقف عند: الفصل ${m.ch}</p>
+                  </div>
+                  <button onclick="event.stopPropagation(); toggleFavorite(${m.id})" class="self-center p-3">
+                    <i data-lucide="trash-2" class="w-5 h-5 text-red-500"></i>
+                  </button>
+                </div>
+              `).join('')}
+            </div>`}
+          </div>
+        `;
+      }
+      // --- صفحة تفاصيل المانجا ---
+      else if (currentView === 'manga' && activeManga) {
+        main.innerHTML = `
+          <div class="relative w-full h-64">
+            <img src="${activeManga.cover}" class="w-full h-full object-cover opacity-40">
+            <div class="absolute inset-0 bg-gradient-to-t from-[var(--bg-color)] to-transparent"></div>
+            <button onclick="setView('home')" class="absolute top-4 right-4 p-2 bg-black/50 rounded-full text-white"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
+            <img src="${activeManga.cover}" class="absolute bottom-[-20px] right-6 w-28 h-40 object-cover rounded-xl shadow-2xl border-2 border-[var(--bg-color)]">
+          </div>
+          <div class="p-6 pt-8">
+            <div class="flex justify-between items-start mb-4">
+              <div>
+                <h1 class="text-2xl font-bold">${activeManga.title}</h1>
+                <p class="text-sm opacity-60 mt-1">${activeManga.genre} • التقييم ${activeManga.rating}</p>
+              </div>
+              <button onclick="toggleFavorite(${activeManga.id})" class="p-3 rounded-full" style="background: var(--card-bg)">
+                <i data-lucide="heart" class="w-6 h-6" style="color: ${favorites.has(activeManga.id) ? 'var(--accent)' : 'var(--text-color)'}; fill: ${favorites.has(activeManga.id) ? 'var(--accent)' : 'none'}"></i>
+              </button>
+            </div>
+            <p class="text-sm leading-relaxed opacity-80 mb-6">${activeManga.synopsis}</p>
+            <button onclick="setView('reader', ${activeManga.id})" class="w-full py-4 rounded-xl font-bold text-white text-center shadow-lg" style="background: var(--accent)">
+              قراءة الفصل ${activeManga.ch}
+            </button>
+          </div>
+        `;
+      }
+      // --- قارئ الفصول (محاكي القراءة) ---
+      else if (currentView === 'reader' && activeManga) {
+        main.innerHTML = `
+          <div class="fixed inset-0 z-50 overflow-y-auto" style="background: #000">
+            <div class="sticky top-0 p-4 flex justify-between items-center bg-black/80 backdrop-blur-sm text-white border-b border-white/10 z-10">
+              <button onclick="setView('manga', ${activeManga.id})"><i data-lucide="x" class="w-6 h-6"></i></button>
+              <span class="font-bold text-sm">${activeManga.title} - الفصل ${activeManga.ch}</span>
+              <button><i data-lucide="settings" class="w-5 h-5"></i></button>
+            </div>
+            <div class="flex flex-col w-full max-w-2xl mx-auto">
+              <!-- صور وهمية لمحاكاة صفحات المانجا -->
+              <div class="w-full h-96 bg-[#111] flex items-center justify-center text-white/40 border-b border-white/5">الصفحة 1</div>
+              <div class="w-full h-96 bg-[#1a1a1a] flex items-center justify-center text-white/40 border-b border-white/5">الصفحة 2</div>
+              <div class="w-full h-96 bg-[#111] flex items-center justify-center text-white/40">الصفحة 3</div>
+            </div>
+            <div class="p-6 flex justify-between bg-black text-white">
+              <button onclick="alert('هذا أحدث فصل!')" class="px-6 py-2 rounded bg-white/10 text-sm">الفصل التالي</button>
+              <button onclick="alert('جاري الانتقال للفصل السابق')" class="px-6 py-2 rounded bg-white/10 text-sm">الفصل السابق</button>
+            </div>
+          </div>
+        `;
+      }
+      lucide.createIcons();
+    }
+    
+    // التشغيل الأول
+    render();
+  </script>
+</body>
+  </html>
+  
