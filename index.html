@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مانجا ليبراكس | Manga Liberax</title>
+  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;600;800&family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root { --bg: #070b12; --panel: #0e1520; --line: #223248; --text: #f3f8ff; --blue: #48a7ff; --gold: #ffd27d; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Cairo', sans-serif; font-size: 14px; line-height: 1.6; }
+    header { height: 75px; background: rgba(7,11,18,0.95); border-bottom: 1px solid rgba(135,190,255,0.1); position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 40px; backdrop-filter: blur(10px); }
+    .brand { font-family: 'Alexandria', sans-serif; font-weight: 800; font-size: 20px; color: #fff; display: flex; gap: 10px; align-items: center; }
+    .brand span { color: var(--blue); }
+    .nav-actions { display: flex; gap: 15px; align-items: center; }
+    .btn { background: linear-gradient(135deg,#72c5ff,#2987f4); color: #061321; border: 0; padding: 10px 18px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-admin { background: #ff4757; color: white; }
+    .container { max-width: 1200px; margin: auto; padding: 30px 20px; }
+    .hero { background: linear-gradient(145deg, #111d2b, #0d141e); border: 1px solid #223448; border-radius: 16px; padding: 40px; margin-bottom: 30px; position: relative; overflow: hidden; }
+    .hero h1 { font-family: 'Alexandria', sans-serif; font-size: 32px; margin: 0 0 10px; }
+    .hero p { color: #91a3b9; max-width: 500px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; cursor: pointer; transition: 0.3s; }
+    .card:hover { transform: translateY(-5px); border-color: var(--blue); }
+    .card img { width: 100%; height: 240px; object-fit: cover; }
+    .card-body { padding: 12px; }
+    .card-body h3 { font-size: 14px; margin: 0 0 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-body span { font-size: 11px; color: #899daf; }
+    /* نافذة الشات والمراقبة */
+    .chat-box { position: fixed; bottom: 20px; left: 20px; width: 340px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000; display: flex; flex-direction: column; overflow: hidden; }
+    .chat-header { background: #131d2b; padding: 12px 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); }
+    .chat-messages { height: 250px; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .msg { background: #1c344b; padding: 8px 12px; border-radius: 8px; font-size: 12px; max-width: 80%; }
+    .msg.mine { align-self: flex-end; background: #1766b3; }
+    .chat-input-area { display: flex; border-top: 1px solid var(--line); background: #0a121d; }
+    .chat-input-area input { flex: 1; background: none; border: 0; padding: 12px; color: white; outline: none; font-size: 12px; }
+    .chat-input-area button { background: var(--blue); border: 0; color: #fff; padding: 0 15px; cursor: pointer; font-weight: bold; }
+    /* نافذة لوحة تحكم الطرف الثالث (المراقبة السرية) */
+    .admin-modal { position: fixed; inset: 0; background: rgba(3,7,13,0.85); backdrop-filter: blur(5px); z-index: 2000; display: none; align-items: center; justifyContent: center; }
+    .admin-content { background: var(--panel); border: 1px solid #ff4757; width: 600px; max-width: 90%; border-radius: 16px; padding: 25px; box-shadow: 0 20px 50px rgba(255,71,87,0.2); }
+    .admin-content h2 { color: #ff4757; margin-top: 0; display: flex; justify-content: space-between; align-items: center; }
+    .spy-log { height: 350px; background: #070b12; border: 1px solid var(--line); border-radius: 10px; padding: 15px; overflow-y: auto; font-family: monospace; font-size: 13px; color: #72d7c4; display: flex; flex-direction: column; gap: 6px; }
+    .close-admin { background: none; border: 0; color: #fff; font-size: 18px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">مانجا <span>ليبراكس</span></div>
+    <div class="nav-actions">
+      <button class="btn btn-admin" onclick="openAdminSpy()"><i data-lucide="eye"></i> لوحة المراقبة السرية (طرف ثالث)</button>
+      <button class="btn" onclick="alert('تم تسجيل الدخول بنجاح')">حسابي</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="hero">
+      <h1>مرحباً بك في عالم الحكايات ✦</h1>
+      <p>اقرأ, استكشف, وتواصل مع مجتمع القرّاء بكل حرية واحترافية.</p>
+    </div>
+
+    <h2>أحدث الأعمال</h2>
+    <div class="grid" id="mangaGrid"></div>
+  </div>
+
+  <!-- صندوق الشات الحي للقرّاء -->
+  <div class="chat-box">
+    <div class="chat-header">
+      <span>💬 شات القرّاء العام</span>
+      <span style="font-size: 10px; color: var(--gold);">متصل</span>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="msg">أهلاً بالجميع في مانجا ليبراكس!</div>
+    </div>
+    <form class="chat-input-area" onsubmit="sendChatMessage(event)">
+      <input type="text" id="chatInput" placeholder="اكتب رسالتك..." required autocomplete="off">
+      <button type="submit">إرسال</button>
+    </form>
+  </div>
+
+  <!-- نافذة المراقبة السرية (الطرف الثالث) -->
+  <div class="admin-modal" id="adminModal">
+    <div class="admin-content">
+      <h2><span>🛡️ لوحة مراقبة الطرف الثالث (سرية)</span> <button class="close-admin" onclick="closeAdminSpy()">✕</button></h2>
+      <p style="color: #91a3b9; font-size: 12px; margin-bottom: 15px;">هذه اللوحة تتيح لك رؤية كل ما يدور في الشات والمحادثات بشكل خفي تماماً:</p>
+      <div class="spy-log" id="spyLog">
+        <div>[النظام]: جاري تتبع المحادثات الحية بانتظار الرسائل...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    // قائمة المانغا التجريبية
+    const mangas = [
+      {title: "القارئ العليم", genre: "أكشن · فانتازيا", img: "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&w=600&q=80"},
+      {title: "سولو ليفلينغ", genre: "أكشن · خيال", img: "https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?auto=format&fit=crop&w=600&q=80"},
+      {title: "بداية ما بعد النهاية", genre: "مغامرة · سحر", img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80"},
+      {title: "برج الإله", genre: "غموض · أكشن", img: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80"}
+    ];
+
+    document.getElementById('mangaGrid').innerHTML = mangas.map(m => `
+      <div class="card">
+        <img src="${m.img}" alt="${m.title}">
+        <div class="card-body">
+          <h3>${m.title}</h3>
+          <span>${m.genre}</span>
+        </div>
+      </div>
+    `).join('');
+
+    // نظام الشات وتخزين الرسائل لرؤيتها كطرف ثالث
+    let allMessages = [];
+
+    function sendChatMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('chatInput');
+      const text = input.value.trim();
+      if(!text) return;
+
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const msgObj = { text, time, user: "قارئ " + Math.floor(Math.random() * 900 + 100) };
+      
+      allMessages.push(msgObj);
+
+      // عرض الرسالة في الشات العام
+      const chatLogs = document.getElementById('chatMessages');
+      chatLogs.innerHTML += `<div class="msg mine"><b>أنت:</b> ${text}</div>`;
+      input.value = '';
+      chatLogs.scrollTop = chatLogs.scrollHeight;
+
+      // تحديث لوحة المراقبة السرية فوراً
+      updateSpyLog();
+    }
+
+    function updateSpyLog() {
+      const spyLog = document.getElementById('spyLog');
+      spyLog.innerHTML = allMessages.map(m => `
+        <div><span style="color:#ff4757">[مراقبة]</span> <b style="color:#48a7ff">${m.user}</b> (${m.time}): ${m.text}</div>
+      `).join('') || '<div>لا توجد رسائل مسجلة حتى الآن...</div>';
+      spyLog.scrollTop = spyLog.scrollHeight;
+    }
+
+    function openAdminSpy() {
+      // كلمة مرور بسيطة أو فتح مباشر حسب رغبتك
+      const pass = prompt("أدخل رمز الدخول السري للطرف الثالث:");
+      if(pass === "123") {
+        document.getElementById('adminModal').style.display = 'flex';
+        updateSpyLog();
+      } else if(pass !== null) {
+        alert("رمز الدخول غير صحيح!");
+      }
+    }
+
+    function closeAdminSpy() {
+      document.getElementById('adminModal').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
